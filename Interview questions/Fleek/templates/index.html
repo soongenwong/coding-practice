@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP to SQL Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- NEW: Adding Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 800px; }
+        pre { background-color: #e9ecef; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        .card { margin-top: 2rem; }
+        .best-match-card { background-color: #e6f7ff; border-color: #91d5ff; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Natural Language to SQL Demo</h1>
+        <p class="text-center text-muted">Type a search query for products and see the generated structured data and SQL.</p>
+
+        <form method="post" class="mt-4">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control form-control-lg" name="query" placeholder="e.g., cheap gaming laptops under $1200" required>
+                <button class="btn btn-primary" type="submit">Generate SQL</button>
+            </div>
+        </form>
+
+        {% if result %}
+        <div class="card">
+            <div class="card-header">
+                <h5>Results for: "{{ result.original_query }}"</h5>
+            </div>
+            <div class="card-body">
+                
+                <!-- ======================================================== -->
+                <!-- UPDATED: Recommendations Section -->
+                <!-- ======================================================== -->
+                <h6>Final Product Recommendations</h6>
+
+                <p class="text-muted fst-italic">{{ result.search_message }}</p>
+                
+                {% if result.best_recommendation %}
+                    <!-- Display the Best Match -->
+                    <div class="card best-match-card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-star-fill text-warning"></i> Best Match</h5>
+                            <p class="fs-5 mb-1">{{ result.best_recommendation.title }}</p>
+                            <p class="card-text text-muted">{{ result.best_recommendation.description }}</p>
+                            <p class="card-text fs-4 fw-bold text-primary">${{ result.best_recommendation.price }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Other Good Matches -->
+                    {% if result.other_recommendations %}
+                        <h6 class="mt-4">Other good matches:</h6>
+                        <ul class="list-group">
+                            {% for product in result.other_recommendations %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">{{ product.title }}</div>
+                                    <small class="text-muted">{{ product.description }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">${{ product.price }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        No products found matching your criteria in our database.
+                    </div>
+                {% endif %}
+                <hr class="my-4">
+                
+                <!-- The rest of the page remains the same -->
+                <h6>Step 1: Structured Data from OpenAI</h6>
+                <pre><code>{{ result.structured_data | tojson(indent=2) }}</code></pre>
+                <hr>
+                <h6>Step 2: Generated SQL Query</h6>
+                <pre><code>{{ result.sql_query }}</code></pre>
+                <h6>SQL Parameters</h6>
+                <pre><code>{{ result.sql_params | tojson(indent=2) }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
